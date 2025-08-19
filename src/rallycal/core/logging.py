@@ -1,5 +1,6 @@
 """Structured logging configuration using loguru."""
 
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,13 +12,13 @@ from .settings import Settings
 
 def setup_logging(settings: Settings) -> None:
     """Configure structured logging with loguru.
-    
+
     Args:
         settings: Application settings containing logging configuration
     """
     # Remove default loguru handler
     logger.remove()
-    
+
     # Determine log level based on environment
     if settings.is_development:
         log_level = "DEBUG"
@@ -37,14 +38,14 @@ def setup_logging(settings: Settings) -> None:
         colorize = False
         backtrace = False
         diagnose = False
-    
+
     # Console handler with environment-appropriate formatting
     console_format = _get_console_format(
         show_time=show_time,
         colorize=colorize,
         environment=settings.environment,
     )
-    
+
     logger.add(
         sink=sys.stderr,
         format=console_format,
@@ -53,14 +54,14 @@ def setup_logging(settings: Settings) -> None:
         backtrace=backtrace,
         diagnose=diagnose,
         enqueue=True,  # Thread-safe logging
-        catch=True,    # Catch exceptions in logging
+        catch=True,  # Catch exceptions in logging
     )
-    
+
     # File handler for non-development environments
     if not settings.is_development:
         log_dir = Path("logs")
         log_dir.mkdir(exist_ok=True)
-        
+
         # Application log file
         logger.add(
             sink=log_dir / "rallycal.log",
@@ -73,20 +74,20 @@ def setup_logging(settings: Settings) -> None:
             catch=True,
             serialize=False,  # Human-readable format
         )
-        
+
         # Error log file (ERROR and above only)
         logger.add(
             sink=log_dir / "rallycal_errors.log",
             format=_get_file_format(),
             level="ERROR",
-            rotation="10 MB", 
+            rotation="10 MB",
             retention="90 days",
             compression="gz",
             enqueue=True,
             catch=True,
             serialize=False,
         )
-        
+
         # JSON structured log for production monitoring
         if settings.is_production:
             logger.add(
@@ -100,13 +101,13 @@ def setup_logging(settings: Settings) -> None:
                 catch=True,
                 serialize=True,  # JSON format
             )
-    
+
     # Configure loguru to handle standard library logging
     import logging
-    
+
     class InterceptHandler(logging.Handler):
         """Intercept standard library logs and redirect to loguru."""
-        
+
         def emit(self, record: logging.LogRecord) -> None:
             """Emit log record through loguru."""
             # Get corresponding Loguru level if it exists
@@ -114,23 +115,23 @@ def setup_logging(settings: Settings) -> None:
                 level = logger.level(record.levelname).name
             except ValueError:
                 level = record.levelno
-            
+
             # Find caller from where originated the logged message
             frame, depth = sys._getframe(6), 6
             while frame and frame.f_code.co_filename == logging.__file__:
                 frame = frame.f_back
                 depth += 1
-            
+
             logger.opt(depth=depth, exception=record.exc_info).log(
                 level, record.getMessage()
             )
-    
+
     # Replace standard library root logger
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
-    
+
     # Suppress noisy third-party loggers
     _configure_third_party_loggers()
-    
+
     # Log startup message
     logger.info(
         "Logging configured",
@@ -142,12 +143,12 @@ def setup_logging(settings: Settings) -> None:
 
 def _get_console_format(show_time: bool, colorize: bool, environment: str) -> str:
     """Get console log format based on environment.
-    
+
     Args:
         show_time: Whether to show timestamp
         colorize: Whether to colorize output
         environment: Application environment
-        
+
     Returns:
         Log format string
     """
@@ -165,26 +166,21 @@ def _get_console_format(show_time: bool, colorize: bool, environment: str) -> st
                 "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
                 "<level>{message}</level>"
             )
+    # Production/staging format (no colors, more structured)
+    elif show_time:
+        return (
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
+            "{level: <8} | "
+            "{name}:{function}:{line} | "
+            "{message}"
+        )
     else:
-        # Production/staging format (no colors, more structured)
-        if show_time:
-            return (
-                "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
-                "{level: <8} | "
-                "{name}:{function}:{line} | "
-                "{message}"
-            )
-        else:
-            return (
-                "{level: <8} | "
-                "{name}:{function}:{line} | " 
-                "{message}"
-            )
+        return "{level: <8} | {name}:{function}:{line} | {message}"
 
 
 def _get_file_format() -> str:
     """Get file log format (human-readable).
-    
+
     Returns:
         Log format string for file output
     """
@@ -200,7 +196,7 @@ def _get_file_format() -> str:
 
 def _get_json_format() -> str:
     """Get JSON log format for structured logging.
-    
+
     Returns:
         Log format string for JSON output
     """
@@ -226,20 +222,20 @@ def _configure_third_party_loggers() -> None:
         "sqlalchemy.engine",
         "sqlalchemy.pool",
     ]
-    
+
     for logger_name in noisy_loggers:
         logging.getLogger(logger_name).setLevel(logging.WARNING)
-    
+
     # Reduce SQLAlchemy INFO logging in non-debug mode
     logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
 
 
 def get_logger(name: str) -> Any:
     """Get a logger instance with the given name.
-    
+
     Args:
         name: Logger name (typically __name__)
-        
+
     Returns:
         Logger instance
     """
@@ -248,7 +244,7 @@ def get_logger(name: str) -> Any:
 
 def log_function_call(func_name: str, **kwargs: Any) -> None:
     """Log function call with parameters.
-    
+
     Args:
         func_name: Name of the function being called
         **kwargs: Function parameters to log
@@ -262,7 +258,7 @@ def log_function_call(func_name: str, **kwargs: Any) -> None:
 
 def log_exception(exc: Exception, context: str | None = None) -> None:
     """Log exception with context.
-    
+
     Args:
         exc: Exception to log
         context: Additional context about where exception occurred
@@ -277,7 +273,7 @@ def log_exception(exc: Exception, context: str | None = None) -> None:
 
 def log_performance(operation: str, duration: float, **metadata: Any) -> None:
     """Log performance metrics.
-    
+
     Args:
         operation: Name of the operation
         duration: Duration in seconds
