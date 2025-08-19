@@ -2,9 +2,26 @@
 
 Guidelines for managing task lists in markdown files to track progress on completing a PRD
 
+## Parallel Execution Strategy
+
+Before executing any tasks, read through the entire plan to identify task dependencies and parallel execution opportunities.
+
+- **Dependency Analysis**: Understand which task groups can run simultaneously vs. which require sequential execution
+- **Batch Execution**: Execute all subtasks within a dependency group simultaneously  
+- **Batch Approval**: Approve entire dependency groups, not individual subtasks
+- **TodoWrite Integration**: Track multiple parallel work streams with TodoWrite tool
+- **Smart Boundaries**: Pause for approval only at dependency boundaries and architectural decisions
+
+## Continuous Validation
+
+- **During Development**: Run `uv run ruff check` after each file modification
+- **Before Subtask Completion**: Run relevant tests (not full suite) for modified components
+- **Auto-Proceed**: If tests pass and change is low-risk (implementation details), continue without approval
+- **Manual Gate**: Require approval for architectural decisions, new dependencies, or breaking changes
+
 ## Task Implementation
 
-- **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
+- **Dependency-Aware Execution:** Execute all subtasks within a dependency group simultaneously. Only pause for approval at dependency boundaries or architectural decisions.
 - **Completion protocol:**  
   1. When you finish a **sub‑task**, immediately mark it as completed by changing `[ ]` to `[x]`.
   2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:

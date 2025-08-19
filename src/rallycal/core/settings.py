@@ -2,15 +2,14 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
-from pydantic import Field, PostgresDsn, validator
+from pydantic import Field, validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
-    
+
     model_config = SettingsConfigDict(
         env_prefix="DB_",
         env_file=".env",
@@ -18,7 +17,7 @@ class DatabaseSettings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
-    
+
     url: str = Field(
         default="sqlite+aiosqlite:///./rallycal.db",
         description="Database URL for SQLAlchemy",
@@ -39,11 +38,18 @@ class DatabaseSettings(BaseSettings):
         le=100,
         description="Max overflow connections",
     )
-    
+
     @validator("url")
     def validate_database_url(cls, v: str) -> str:
         """Validate database URL format."""
-        if not v.startswith(("sqlite+aiosqlite://", "postgresql+asyncpg://", "postgresql://", "sqlite:///")):
+        if not v.startswith(
+            (
+                "sqlite+aiosqlite://",
+                "postgresql+asyncpg://",
+                "postgresql://",
+                "sqlite:///",
+            )
+        ):
             msg = "Database URL must be SQLite or PostgreSQL"
             raise ValueError(msg)
         return v
@@ -51,15 +57,15 @@ class DatabaseSettings(BaseSettings):
 
 class ServerSettings(BaseSettings):
     """Web server configuration settings."""
-    
+
     model_config = SettingsConfigDict(
         env_prefix="SERVER_",
-        env_file=".env", 
+        env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
     )
-    
+
     host: str = Field(
         default="0.0.0.0",
         description="Server host address",
@@ -84,7 +90,7 @@ class ServerSettings(BaseSettings):
         default="info",
         description="Uvicorn log level",
     )
-    
+
     @validator("log_level")
     def validate_log_level(cls, v: str) -> str:
         """Validate log level."""
@@ -97,15 +103,15 @@ class ServerSettings(BaseSettings):
 
 class CalendarSettings(BaseSettings):
     """Calendar processing configuration settings."""
-    
+
     model_config = SettingsConfigDict(
         env_prefix="CALENDAR_",
         env_file=".env",
-        env_file_encoding="utf-8", 
+        env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
     )
-    
+
     config_file: Path = Field(
         default=Path("config/calendars.yaml"),
         description="Path to calendar configuration file",
@@ -134,11 +140,11 @@ class CalendarSettings(BaseSettings):
         le=10000,
         description="Maximum events to process per calendar",
     )
-    
+
     @validator("config_file")
     def validate_config_file(cls, v: Path) -> Path:
         """Validate configuration file path."""
-        if not v.suffix.lower() in {".yaml", ".yml"}:
+        if v.suffix.lower() not in {".yaml", ".yml"}:
             msg = "Configuration file must be YAML format"
             raise ValueError(msg)
         return v
@@ -146,7 +152,7 @@ class CalendarSettings(BaseSettings):
 
 class SecuritySettings(BaseSettings):
     """Security configuration settings."""
-    
+
     model_config = SettingsConfigDict(
         env_prefix="SECURITY_",
         env_file=".env",
@@ -154,7 +160,7 @@ class SecuritySettings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
-    
+
     secret_key: str = Field(
         default="dev-secret-key-change-in-production",
         min_length=32,
@@ -174,7 +180,7 @@ class SecuritySettings(BaseSettings):
         le=10000,
         description="Rate limit requests per minute",
     )
-    
+
     @validator("secret_key")
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key strength."""
@@ -186,14 +192,14 @@ class SecuritySettings(BaseSettings):
 
 class Settings(BaseSettings):
     """Main application settings."""
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
     )
-    
+
     # Application metadata
     app_name: str = Field(
         default="RallyCal",
@@ -211,13 +217,13 @@ class Settings(BaseSettings):
         default="development",
         description="Application environment",
     )
-    
+
     # Component settings
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     server: ServerSettings = Field(default_factory=ServerSettings)
     calendar: CalendarSettings = Field(default_factory=CalendarSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
-    
+
     @validator("environment")
     def validate_environment(cls, v: str) -> str:
         """Validate environment name."""
@@ -226,12 +232,12 @@ class Settings(BaseSettings):
             msg = f"Environment must be one of: {valid_envs}"
             raise ValueError(msg)
         return v.lower()
-    
+
     @property
     def is_production(self) -> bool:
         """Check if running in production environment."""
         return self.environment == "production"
-    
+
     @property
     def is_development(self) -> bool:
         """Check if running in development environment."""

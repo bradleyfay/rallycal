@@ -1,5 +1,6 @@
 def main():
-    print("Hello from rallycal!")
+    """Basic main function for development testing."""
+    pass
 
 
 if __name__ == "__main__":

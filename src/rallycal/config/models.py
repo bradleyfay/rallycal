@@ -1,7 +1,7 @@
 """Pydantic models for calendar source configuration."""
 
 import re
-from datetime import datetime, time
+from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
 from urllib.parse import urlparse
@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, validator
 
 class AuthType(str, Enum):
     """Supported authentication types."""
-    
+
     NONE = "none"
     BASIC = "basic"
     BEARER = "bearer"
@@ -21,7 +21,7 @@ class AuthType(str, Enum):
 
 class AuthConfig(BaseModel):
     """Authentication configuration for calendar sources."""
-    
+
     type: AuthType = Field(
         default=AuthType.NONE,
         description="Authentication type",
@@ -54,42 +54,52 @@ class AuthConfig(BaseModel):
         default=None,
         description="OAuth2 token endpoint URL",
     )
-    
+
     @validator("username")
-    def validate_username_with_basic(cls, v: str | None, values: dict[str, Any]) -> str | None:
+    def validate_username_with_basic(
+        cls, v: str | None, values: dict[str, Any]
+    ) -> str | None:
         """Validate username is provided for basic auth."""
         if values.get("type") == AuthType.BASIC and not v:
             msg = "Username is required for basic authentication"
             raise ValueError(msg)
         return v
-    
+
     @validator("password")
-    def validate_password_with_basic(cls, v: str | None, values: dict[str, Any]) -> str | None:
+    def validate_password_with_basic(
+        cls, v: str | None, values: dict[str, Any]
+    ) -> str | None:
         """Validate password is provided for basic auth."""
         if values.get("type") == AuthType.BASIC and not v:
             msg = "Password is required for basic authentication"
             raise ValueError(msg)
         return v
-    
+
     @validator("token")
-    def validate_token_with_bearer_or_api_key(cls, v: str | None, values: dict[str, Any]) -> str | None:
+    def validate_token_with_bearer_or_api_key(
+        cls, v: str | None, values: dict[str, Any]
+    ) -> str | None:
         """Validate token is provided for bearer or API key auth."""
         auth_type = values.get("type")
         if auth_type in {AuthType.BEARER, AuthType.API_KEY} and not v:
             msg = f"Token is required for {auth_type} authentication"
             raise ValueError(msg)
         return v
-    
+
     @validator("oauth2_client_id")
-    def validate_oauth2_client_id(cls, v: str | None, values: dict[str, Any]) -> str | None:
+    def validate_oauth2_client_id(
+        cls, v: str | None, values: dict[str, Any]
+    ) -> str | None:
         """Validate OAuth2 client ID is provided for OAuth2 auth."""
         if values.get("type") == AuthType.OAUTH2 and not v:
             msg = "OAuth2 client ID is required for OAuth2 authentication"
             raise ValueError(msg)
         return v
-    
+
     @validator("oauth2_token_url")
-    def validate_oauth2_token_url(cls, v: str | None, values: dict[str, Any]) -> str | None:
+    def validate_oauth2_token_url(
+        cls, v: str | None, values: dict[str, Any]
+    ) -> str | None:
         """Validate OAuth2 token URL is provided and valid for OAuth2 auth."""
         if values.get("type") == AuthType.OAUTH2:
             if not v:
@@ -104,7 +114,7 @@ class AuthConfig(BaseModel):
 
 class RecurrenceRule(BaseModel):
     """Recurrence rule for manual events."""
-    
+
     frequency: Literal["daily", "weekly", "monthly", "yearly"] = Field(
         description="Recurrence frequency",
     )
@@ -132,7 +142,7 @@ class RecurrenceRule(BaseModel):
         default=None,
         description="Days of month for monthly recurrence",
     )
-    
+
     @validator("by_weekday")
     def validate_weekdays(cls, v: list[int] | None) -> list[int] | None:
         """Validate weekday values."""
@@ -142,7 +152,7 @@ class RecurrenceRule(BaseModel):
                     msg = "Weekdays must be between 0 (Monday) and 6 (Sunday)"
                     raise ValueError(msg)
         return v
-    
+
     @validator("by_month_day")
     def validate_month_days(cls, v: list[int] | None) -> list[int] | None:
         """Validate month day values."""
@@ -152,9 +162,11 @@ class RecurrenceRule(BaseModel):
                     msg = "Month days must be between 1 and 31"
                     raise ValueError(msg)
         return v
-    
+
     @validator("count")
-    def validate_count_or_until(cls, v: int | None, values: dict[str, Any]) -> int | None:
+    def validate_count_or_until(
+        cls, v: int | None, values: dict[str, Any]
+    ) -> int | None:
         """Validate that either count or until is specified, not both."""
         if v is not None and values.get("until") is not None:
             msg = "Cannot specify both count and until"
@@ -164,7 +176,7 @@ class RecurrenceRule(BaseModel):
 
 class ManualEvent(BaseModel):
     """Manual event configuration."""
-    
+
     title: str = Field(
         min_length=1,
         max_length=255,
@@ -198,7 +210,7 @@ class ManualEvent(BaseModel):
         default=None,
         description="Recurrence rule for repeating events",
     )
-    
+
     @validator("end_date")
     def validate_end_after_start(cls, v: datetime, values: dict[str, Any]) -> datetime:
         """Validate end date is after start date."""
@@ -207,7 +219,7 @@ class ManualEvent(BaseModel):
             msg = "End date must be after start date"
             raise ValueError(msg)
         return v
-    
+
     @validator("color")
     def validate_color_format(cls, v: str | None) -> str | None:
         """Validate color is in hex format."""
@@ -220,7 +232,7 @@ class ManualEvent(BaseModel):
 
 class CalendarSource(BaseModel):
     """Configuration for a calendar source."""
-    
+
     name: str = Field(
         min_length=1,
         max_length=100,
@@ -272,7 +284,7 @@ class CalendarSource(BaseModel):
         default_factory=list,
         description="Keywords to exclude events (exclude events containing these)",
     )
-    
+
     @validator("url")
     def validate_url_format(cls, v: str) -> str:
         """Validate URL format and scheme."""
@@ -284,7 +296,7 @@ class CalendarSource(BaseModel):
             msg = "URL scheme must be http, https, or webcal"
             raise ValueError(msg)
         return v
-    
+
     @validator("color")
     def validate_color_format(cls, v: str) -> str:
         """Validate color is in hex format."""
@@ -292,7 +304,7 @@ class CalendarSource(BaseModel):
             msg = "Color must be in hex format (#RRGGBB)"
             raise ValueError(msg)
         return v
-    
+
     @validator("name")
     def validate_name_uniqueness_placeholder(cls, v: str) -> str:
         """Placeholder for name uniqueness validation (handled at config level)."""
@@ -301,7 +313,7 @@ class CalendarSource(BaseModel):
 
 class CalendarConfig(BaseModel):
     """Complete calendar configuration."""
-    
+
     calendars: list[CalendarSource] = Field(
         description="List of calendar sources",
     )
@@ -313,27 +325,33 @@ class CalendarConfig(BaseModel):
         default_factory=dict,
         description="Global configuration settings",
     )
-    
+
     @validator("calendars")
-    def validate_calendar_names_unique(cls, v: list[CalendarSource]) -> list[CalendarSource]:
+    def validate_calendar_names_unique(
+        cls, v: list[CalendarSource]
+    ) -> list[CalendarSource]:
         """Validate that calendar names are unique."""
         names = [cal.name for cal in v]
         if len(names) != len(set(names)):
             msg = "Calendar names must be unique"
             raise ValueError(msg)
         return v
-    
+
     @validator("calendars")
-    def validate_calendar_urls_unique(cls, v: list[CalendarSource]) -> list[CalendarSource]:
+    def validate_calendar_urls_unique(
+        cls, v: list[CalendarSource]
+    ) -> list[CalendarSource]:
         """Validate that calendar URLs are unique."""
         urls = [cal.url for cal in v]
         if len(urls) != len(set(urls)):
             msg = "Calendar URLs must be unique"
             raise ValueError(msg)
         return v
-    
+
     @validator("calendars")
-    def validate_at_least_one_calendar(cls, v: list[CalendarSource]) -> list[CalendarSource]:
+    def validate_at_least_one_calendar(
+        cls, v: list[CalendarSource]
+    ) -> list[CalendarSource]:
         """Validate that at least one calendar is configured."""
         if not v:
             msg = "At least one calendar source must be configured"

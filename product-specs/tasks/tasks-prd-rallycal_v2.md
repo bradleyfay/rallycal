@@ -65,29 +65,29 @@ Generated from: `product-specs/prd-rallycal.md`
   - [x] 2.5 Implement file-based configuration change detection with proper event handling
   - [x] 2.6 Add support for manual events configuration with datetime and recurrence validation
 
-- [ ] 3.0 Calendar Data Fetching & Processing Engine
-  - [ ] 3.1 Implement async CalendarFetcher using httpx.AsyncClient with connection pooling
-  - [ ] 3.2 Add iCal/ICS parsing with icalendar library and comprehensive error handling
-  - [ ] 3.3 Implement retry logic with exponential backoff using tenacity for failed requests
-  - [ ] 3.4 Add timeout handling and circuit breaker patterns for graceful degradation
-  - [ ] 3.5 Implement caching layer with TTL and conditional requests (ETag/Last-Modified)
-  - [ ] 3.6 Add support for multiple authentication methods (Bearer, Basic auth, API keys)
+- [x] 3.0 Calendar Data Fetching & Processing Engine
+  - [x] 3.1 Implement async CalendarFetcher using httpx.AsyncClient with connection pooling
+  - [x] 3.2 Add iCal/ICS parsing with icalendar library and comprehensive error handling
+  - [x] 3.3 Implement retry logic with exponential backoff using tenacity for failed requests
+  - [x] 3.4 Add timeout handling and circuit breaker patterns for graceful degradation
+  - [x] 3.5 Implement caching layer with TTL and conditional requests (ETag/Last-Modified)
+  - [x] 3.6 Add support for multiple authentication methods (Bearer, Basic auth, API keys)
 
-- [ ] 4.0 Event Aggregation & Deduplication Logic
-  - [ ] 4.1 Create comprehensive Event Pydantic model with datetime validation and timezone handling
-  - [ ] 4.2 Implement sophisticated duplicate detection using fuzzy matching algorithms
-  - [ ] 4.3 Design async event merging pipeline with conflict resolution strategies
-  - [ ] 4.4 Add deterministic color assignment system with consistent hashing
-  - [ ] 4.5 Implement configurable event title formatting with source identification
-  - [ ] 4.6 Create overlap detection and resolution for concurrent events from different sources
+- [x] 4.0 Event Aggregation & Deduplication Logic
+  - [x] 4.1 Create comprehensive Event Pydantic model with datetime validation and timezone handling
+  - [x] 4.2 Implement sophisticated duplicate detection using fuzzy matching algorithms
+  - [x] 4.3 Design async event merging pipeline with conflict resolution strategies
+  - [x] 4.4 Add deterministic color assignment system with consistent hashing
+  - [x] 4.5 Implement configurable event title formatting with source identification
+  - [x] 4.6 Create overlap detection and resolution for concurrent events from different sources
 
-- [ ] 5.0 Data Persistence & Storage Layer
-  - [ ] 5.1 Design async SQLAlchemy models for Events, CalendarSources, and SyncHistory
-  - [ ] 5.2 Set up Alembic for database migrations with async engine configuration
-  - [ ] 5.3 Implement async repository pattern with comprehensive CRUD operations
-  - [ ] 5.4 Add connection pooling, transaction management, and proper session handling
-  - [ ] 5.5 Implement cascade deletion and cleanup procedures for removed calendar sources
-  - [ ] 5.6 Add database indexing strategy for performance optimization
+- [x] 5.0 Data Persistence & Storage Layer
+  - [x] 5.1 Design async SQLAlchemy models for Events, CalendarSources, and SyncHistory
+  - [x] 5.2 Set up Alembic for database migrations with async engine configuration
+  - [x] 5.3 Implement async repository pattern with comprehensive CRUD operations
+  - [x] 5.4 Add connection pooling, transaction management, and proper session handling
+  - [x] 5.5 Implement cascade deletion and cleanup procedures for removed calendar sources
+  - [x] 5.6 Add database indexing strategy for performance optimization
 
 - [x] 6.0 iCal Feed Generation & Standards Compliance
   - [x] 6.1 Implement ICalGenerator using icalendar library with RFC 5545 compliance
