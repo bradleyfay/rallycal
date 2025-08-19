@@ -19,7 +19,7 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 1. **Receive PRD Reference:** The user points the AI to a specific PRD file
 2. **Analyze PRD:** The AI reads and analyzes the functional requirements, user stories, and other sections of the specified PRD.
 3. **Ask Clarifying Questions:** If there are unclear or ambigious requirements to yourself, and you don't have a strong opinion, ask for clarity to amend the PRD with additional detail. If the PRD is clear, move on.
-4. **Assess Current State:** Review the existing codebase to understand existing infrastructure, architectural patterns and conventions. Also, identify any existing modules or features that already exist and could be relevant to the PRD requirements. Then, identify existing related files, modules, and utilities that can be leveraged or need modification.
+4. **Assess Current State:** Review the existing codebase and **CLAUDE.md tech stack requirements** to understand architectural constraints, patterns, and conventions. Identify any existing modules or features that could be relevant to the PRD requirements. Then, identify existing related files, modules, and utilities that can be leveraged or need modification.
 5. **Phase 1: Generate Parent Tasks:** Based on the PRD analysis and current state assessment, create the file and generate the main, high-level tasks required to implement the feature. Use your judgement on how many high-level tasks to use. It's likely to be about
 6. **Inform the user:** Present these tasks to the user in the specified format (without sub-tasks yet) For example, say "I have generated the high-level tasks based on the PRD. Ready to generate the sub-tasks? Respond with 'Go' to proceed." .
 7. **Wait for Confirmation:** Pause and wait for the user to respond with "Go".
@@ -45,9 +45,10 @@ The generated task list _must_ follow this structure:
 
 ### Notes
 
-- Unit tests should follow Python conventions with test files prefixed with `test_` (e.g., `module.py` and `test_module.py` in the same directory or in a separate `tests/` directory).
-- All testing should be done within the pytest framework and ecosystem. Add development dependencies to `pyproject.toml` as necessary to build out a comprehensive testing harness.
-- Use `pytest [optional/path/to/test/file]` to run tests. Running without a path executes all tests found by pytest's discovery mechanism.
+- Break complex parent tasks into 4-8 actionable subtasks for optimal execution flow
+- Ensure each subtask represents a complete, testable unit of work
+- Consider architectural decisions that may require approval gates when structuring tasks
+- Group related functionality to minimize context switching during implementation
 
 ## Tasks
 

@@ -11,7 +11,7 @@ To guide an AI assistant in creating a detailed Product Requirements Document (P
 
 1. **Receive Initial Prompt:** The user provides a brief description or request for a new product or feature.
 2. **Determine Type:** Identify whether this is a core product spec or a feature addition to an existing product.
-3. **Ask Clarifying Questions:** Before writing the PRD, the AI *must* ask clarifying questions to gather sufficient detail. The goal is to understand the "what" and "why" of the feature, not necessarily the "how" (which the developer will figure out). Make sure to provide options in letter/number lists so I can respond easily with my selections.
+3. **Ask Clarifying Questions:** Use [clarifying questions workflow](protocols/clarifying-questions.md) to gather sufficient detail systematically.
 4. **Generate PRD:** Based on the initial prompt and the user's answers to the clarifying questions, generate a PRD using the appropriate structure (core product or feature addition).
 5. **Save PRD:** Save the generated document with appropriate naming:
    - Core Product: `prd-[product-name].md` in `./product-specs/`
@@ -19,25 +19,7 @@ To guide an AI assistant in creating a detailed Product Requirements Document (P
 
 ## Clarifying Questions
 
-The AI should first determine if this is a core product or feature addition, then adapt questions accordingly.
-
-### Initial Question
-
-- **Type Determination:** "Is this a specification for:
-  a) A new product/system from scratch (core product)
-  b) A new feature for an existing product (feature addition)"
-
-### Common Questions for Both Types
-
-- **Problem/Goal:** "What problem does this feature solve for the user?" or "What is the main goal we want to achieve with this feature?"
-- **Target User:** "Who is the primary user of this feature?"
-- **Core Functionality:** "Can you describe the key actions a user should be able to perform with this feature?"
-- **User Stories:** "Could you provide a few user stories? (e.g., As a [type of user], I want to [perform an action] so that [benefit].)"
-- **Acceptance Criteria:** "How will we know when this feature is successfully implemented? What are the key success criteria?"
-- **Scope/Boundaries:** "Are there any specific things this feature *should not* do (non-goals)?"
-- **Data Requirements:** "What kind of data does this feature need to display or manipulate?"
-- **Design/UI:** "Are there any existing design mockups or UI guidelines to follow?" or "Can you describe the desired look and feel?"
-- **Edge Cases:** "Are there any potential edge cases or error conditions we should consider?"
+Reference the [clarifying questions workflow](workflows/clarifying-questions.md) for systematic requirement gathering.
 
 ## PRD Structure
 
@@ -90,4 +72,4 @@ Assume the primary reader of the PRD is a **junior developer**. Therefore, requi
 3. **Ask Clarifying Questions:** Ensure you gather sufficient detail through structured questions
 4. **Iterate Based on Feedback:** Take the user's answers and refine the PRD accordingly
 5. **Save in Correct Location:** Ensure the PRD is saved in `./product-specs/` with the appropriate naming convention
-6. **Python Focus:** Assume implementation will be in Python unless otherwise specified
+6. **Implementation Focus:** Assume implementation follows **CLAUDE.md tech stack requirements** unless otherwise specified

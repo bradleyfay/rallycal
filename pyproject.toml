@@ -61,56 +61,248 @@ dependencies = [
 ]
 
 [tool.hatch.envs.default.scripts]
+# Testing
 test = "pytest {args:tests}"
 test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/rallycal {args:tests}"
+test-unit = "pytest -m unit {args:tests}"
+test-integration = "pytest -m integration {args:tests}"
+test-watch = "pytest-watch -- {args:tests}"
+
+# Code quality with Ruff (replaces black, isort, flake8, etc.)
 lint = "ruff check {args:.}"
+lint-fix = "ruff check --fix {args:.}"
 format = "ruff format {args:.}"
+format-check = "ruff format --check {args:.}"
+
+# Combined ruff operations
+ruff = ["format", "lint-fix"]
+ruff-check = ["format-check", "lint"]
+
+# Type checking
 typecheck = "mypy {args:src/rallycal tests}"
-all = ["lint", "typecheck", "test-cov"]
+
+# Run all checks (CI/CD)
+all = ["ruff-check", "typecheck", "test-cov"]
+all-fix = ["ruff", "typecheck", "test-cov"]
+
+# Development helpers
+clean = "rm -rf .ruff_cache .mypy_cache .pytest_cache htmlcov .coverage"
+check = ["ruff-check", "typecheck"]
 
 [tool.ruff]
+# Python version target
 target-version = "py313"
+
+# Line length (same as Black's default)
 line-length = 88
+
+# Files to include
 src = ["src", "tests"]
 
+# Files to exclude
+extend-exclude = [
+    "alembic/versions/*.py",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".git",
+    "build",
+    "dist",
+]
+
+# Automatically fix violations when safe to do so
+fix = true
+
+# Show fixes in the output
+show-fixes = true
+
+# Output format
+output-format = "concise"
+
+[tool.ruff.format]
+# Formatting options (Black replacement)
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = 72
+
 [tool.ruff.lint]
+# Enable a comprehensive set of rules
 select = [
+    # Core rules
+    "F",     # pyflakes (errors)
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "I",     # isort (import sorting)
+    "N",     # pep8-naming
+    "UP",    # pyupgrade (upgrade syntax for newer Python)
+    
+    # Additional flake8 plugins
     "A",     # flake8-builtins
     "ARG",   # flake8-unused-arguments  
     "B",     # flake8-bugbear
-    "C",     # flake8-comprehensions
+    "C4",    # flake8-comprehensions
     "DTZ",   # flake8-datetimez
-    "E",     # pycodestyle errors
     "EM",    # flake8-errmsg
-    "F",     # pyflakes
     "FBT",   # flake8-boolean-trap
-    "I",     # isort
     "ICN",   # flake8-import-conventions
-    "N",     # pep8-naming
+    "PIE",   # flake8-pie
+    "PT",    # flake8-pytest-style
+    "PTH",   # flake8-use-pathlib
+    "Q",     # flake8-quotes
+    "RET",   # flake8-return
+    "RSE",   # flake8-raise
+    "SIM",   # flake8-simplify
+    "T10",   # flake8-debugger
+    "T20",   # flake8-print
+    "TID",   # flake8-tidy-imports
+    "YTT",   # flake8-2020
+    
+    # Pylint rules
     "PLC",   # pylint conventions
     "PLE",   # pylint errors
     "PLR",   # pylint refactor
     "PLW",   # pylint warnings
-    "Q",     # flake8-quotes
-    "RUF",   # Ruff-specific rules
+    
+    # Security
     "S",     # flake8-bandit
-    "T",     # flake8-debugger
-    "TID",   # flake8-tidy-imports
-    "UP",    # pyupgrade
-    "W",     # pycodestyle warnings
-    "YTT",   # flake8-2020
-]
-ignore = [
-    "S101",   # Use of assert detected
-    "S311",   # Standard pseudo-random generators are not suitable for security/cryptographic purposes
-    "PLR0913", # Too many arguments in function definition
+    
+    # Documentation
+    "D",     # pydocstyle (docstrings)
+    
+    # Type annotations
+    "ANN",   # flake8-annotations
+    "TCH",   # flake8-type-checking
+    
+    # Async
+    "ASYNC", # flake8-async
+    
+    # Ruff-specific
+    "RUF",   # Ruff-specific rules
+    
+    # Performance
+    "PERF",  # Performance anti-patterns
+    
+    # Error handling
+    "ERA",   # eradicate (commented code)
+    "TRY",   # tryceratops (exception handling)
+    
+    # Additional best practices
+    "FURB",  # refurb (modernize code)
+    "LOG",   # flake8-logging
 ]
 
+# Rules to ignore
+ignore = [
+    # Allow assert in tests
+    "S101",   # Use of assert detected
+    
+    # Allow random for non-security purposes
+    "S311",   # Standard pseudo-random generators
+    
+    # Documentation (we can be flexible here)
+    "D100",   # Missing docstring in public module
+    "D101",   # Missing docstring in public class
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D104",   # Missing docstring in public package
+    "D105",   # Missing docstring in magic method
+    "D107",   # Missing docstring in __init__
+    "D203",   # 1 blank line required before class docstring
+    "D212",   # Multi-line docstring summary should start at the first line
+    
+    # Type annotations (optional for now)
+    "ANN101", # Missing type annotation for self
+    "ANN102", # Missing type annotation for cls
+    "ANN401", # Dynamically typed expressions (Any)
+    
+    # Complexity limits (can be strict)
+    "PLR0913", # Too many arguments in function definition
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    
+    # Allow print statements in CLI tools
+    "T201",   # Print found
+    
+    # Exception handling style
+    "TRY003", # Avoid specifying long messages outside exception class
+    
+    # Allow TODO comments
+    "FIX002", # Line contains TODO
+    "TD002",  # Missing author in TODO
+    "TD003",  # Missing issue link in TODO
+]
+
+# Auto-fix these rules
+fixable = ["ALL"]
+unfixable = []
+
+# Per-file rule ignores
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["PLR2004", "S101", "TID252"]
+"tests/**/*" = [
+    "PLR2004", # Magic value comparison
+    "S101",    # Use of assert
+    "TID252",  # Relative imports
+    "ANN",     # Type annotations not required in tests
+    "D",       # Docstrings not required in tests
+    "FBT",     # Boolean traps ok in tests
+]
+"alembic/**/*" = [
+    "D",       # Docstrings not required in migrations
+    "ANN",     # Type annotations not required in migrations
+]
+"src/rallycal/__about__.py" = ["D"]
 
 [tool.ruff.lint.isort]
+# Import sorting configuration (isort replacement)
 known-first-party = ["rallycal"]
+combine-as-imports = true
+force-sort-within-sections = true
+split-on-trailing-comma = true
+section-order = [
+    "future",
+    "standard-library", 
+    "third-party",
+    "first-party",
+    "local-folder"
+]
+
+[tool.ruff.lint.flake8-quotes]
+# Quote style configuration
+inline-quotes = "double"
+multiline-quotes = "double"
+docstring-quotes = "double"
+
+[tool.ruff.lint.pydocstyle]
+# Docstring convention
+convention = "google"
+
+[tool.ruff.lint.pylint]
+# Pylint configuration
+max-args = 7
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
+[tool.ruff.lint.mccabe]
+# Complexity configuration
+max-complexity = 10
+
+[tool.ruff.lint.flake8-bugbear]
+# Extend immutable calls
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]
+
+[tool.ruff.lint.flake8-pytest-style]
+# Pytest style preferences
+fixture-parentheses = true
+mark-parentheses = true
+
+[tool.ruff.lint.flake8-annotations]
+# Allow Any in type hints for flexibility
+allow-star-arg-any = true
+suppress-none-returning = true
 
 [tool.mypy]
 python_version = "3.13"
@@ -152,3 +344,48 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
+precision = 2
+show_missing = true
+skip_covered = false
+fail_under = 80
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "-q",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src/rallycal",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+    "--asyncio-mode=auto",
+    "--tb=short",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests requiring database or external services",
+    "e2e: End-to-end tests for complete workflows",
+    "slow: Slow running tests (can be skipped with -m 'not slow')",
+    "external: Tests requiring external API calls",
+]
+asyncio_mode = "auto"
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning:pkg_resources.*",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+
+[tool.alembic]
+script_location = "alembic"
+file_template = "%(year)d%(month).2d%(day).2d_%(hour).2d%(minute).2d_%(rev)s_%(slug)s"
+prepend_sys_path = "."
+version_path_separator = "os"
+sqlalchemy_url = "sqlite+aiosqlite:///./rallycal.db"
