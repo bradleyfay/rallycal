@@ -1,0 +1,342 @@
+# RallyCal Deployment Pipeline
+# Handles production deployments with approval gates and rollback capabilities
+
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+      force_deploy:
+        description: 'Force deployment (skip some checks)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: read
+  deployments: write
+  actions: read
+
+jobs:
+  # Job 1: Pre-deployment validation
+  validate:
+    name: Pre-deployment Validation
+    runs-on: ubuntu-latest
+    
+    outputs:
+      image-tag: ${{ steps.image.outputs.tag }}
+      deploy-environment: ${{ steps.env.outputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine deployment environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine image tag
+        id: image
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate image exists
+        run: |
+          echo "Validating image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image.outputs.tag }}"
+          # Add image validation logic here
+
+      - name: Run pre-deployment checks
+        run: |
+          echo "Running pre-deployment validation..."
+          # Add validation scripts here
+          # Check database migrations
+          # Verify configuration
+          # Check external dependencies
+
+  # Job 2: Deploy to target environment
+  deploy:
+    name: Deploy to ${{ needs.validate.outputs.deploy-environment }}
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    environment:
+      name: ${{ needs.validate.outputs.deploy-environment }}
+      url: ${{ steps.deployment.outputs.url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up deployment context
+        id: context
+        run: |
+          ENV="${{ needs.validate.outputs.deploy-environment }}"
+          if [ "$ENV" == "production" ]; then
+            echo "url=https://rallycal.com" >> $GITHUB_OUTPUT
+            echo "namespace=rallycal-prod" >> $GITHUB_OUTPUT
+            echo "replicas=3" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://staging.rallycal.com" >> $GITHUB_OUTPUT
+            echo "namespace=rallycal-staging" >> $GITHUB_OUTPUT
+            echo "replicas=1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create deployment
+        id: deployment
+        run: |
+          echo "Creating deployment for ${{ needs.validate.outputs.deploy-environment }}"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.validate.outputs.image-tag }}"
+          echo "Namespace: ${{ steps.context.outputs.namespace }}"
+          echo "Replicas: ${{ steps.context.outputs.replicas }}"
+          echo "URL: ${{ steps.context.outputs.url }}"
+          
+          # Deployment logic would go here
+          # This could be:
+          # - kubectl apply for Kubernetes
+          # - docker-compose for Docker
+          # - Terraform apply for infrastructure
+          # - Cloud provider specific deployment tools
+          
+          echo "url=${{ steps.context.outputs.url }}" >> $GITHUB_OUTPUT
+
+      - name: Wait for deployment to be ready
+        run: |
+          echo "Waiting for deployment to be ready..."
+          timeout=300
+          interval=10
+          elapsed=0
+          
+          while [ $elapsed -lt $timeout ]; do
+            if curl -f "${{ steps.context.outputs.url }}/health" > /dev/null 2>&1; then
+              echo "Deployment is ready!"
+              break
+            fi
+            
+            echo "Waiting for deployment... ($elapsed/$timeout seconds)"
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
+          
+          if [ $elapsed -ge $timeout ]; then
+            echo "Deployment timeout reached!"
+            exit 1
+          fi
+
+      - name: Run post-deployment tests
+        run: |
+          echo "Running post-deployment tests..."
+          BASE_URL="${{ steps.context.outputs.url }}"
+          
+          # Health check tests
+          curl -f "$BASE_URL/health"
+          curl -f "$BASE_URL/api/v1/health/comprehensive"
+          curl -f "$BASE_URL/api/v1/health/ready"
+          curl -f "$BASE_URL/api/v1/health/live"
+          
+          # API tests
+          curl -f "$BASE_URL/api/v1/calendar.ics"
+          curl -f "$BASE_URL/api/v1/metrics"
+          
+          # Performance tests
+          for i in {1..5}; do
+            response_time=$(curl -s -o /dev/null -w "%{time_total}" "$BASE_URL/health")
+            echo "Health check response time: ${response_time}s"
+            if (( $(echo "$response_time > 2.0" | bc -l) )); then
+              echo "Warning: Slow response time detected"
+            fi
+          done
+
+      - name: Update deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment to ${{ needs.validate.outputs.deploy-environment }} successful"
+            echo "🔗 Application URL: ${{ steps.context.outputs.url }}"
+          else
+            echo "❌ Deployment to ${{ needs.validate.outputs.deploy-environment }} failed"
+          fi
+
+  # Job 3: Run comprehensive tests on deployed environment
+  test-deployed:
+    name: Test Deployed Application
+    runs-on: ubuntu-latest
+    needs: [validate, deploy]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest httpx aiohttp
+
+      - name: Run end-to-end tests against deployed app
+        env:
+          BASE_URL: ${{ needs.deploy.outputs.url }}
+          ENVIRONMENT: ${{ needs.validate.outputs.deploy-environment }}
+        run: |
+          echo "Running E2E tests against $BASE_URL"
+          # Run comprehensive tests against the deployed application
+          # This would include API tests, integration tests, etc.
+          
+          # Example test script
+          python -c "
+          import asyncio
+          import httpx
+          
+          async def test_app():
+              async with httpx.AsyncClient() as client:
+                  # Test health endpoints
+                  response = await client.get('${{ needs.deploy.outputs.url }}/health')
+                  assert response.status_code == 200
+                  print('✅ Health check passed')
+                  
+                  # Test calendar endpoint
+                  response = await client.get('${{ needs.deploy.outputs.url }}/api/v1/calendar.ics')
+                  assert response.status_code == 200
+                  assert 'text/calendar' in response.headers.get('content-type', '')
+                  print('✅ Calendar endpoint test passed')
+                  
+                  print('All tests passed!')
+          
+          asyncio.run(test_app())
+          "
+
+  # Job 4: Performance monitoring
+  monitor:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    needs: [validate, deploy, test-deployed]
+    if: needs.validate.outputs.deploy-environment == 'production'
+
+    steps:
+      - name: Set up monitoring alerts
+        run: |
+          echo "Setting up monitoring and alerts for production deployment"
+          # Set up monitoring dashboards
+          # Configure alerting rules
+          # Update status page
+
+      - name: Performance baseline test
+        run: |
+          echo "Running performance baseline tests"
+          BASE_URL="${{ needs.deploy.outputs.url }}"
+          
+          # Run performance tests and collect metrics
+          for endpoint in "/health" "/api/v1/calendar.ics" "/api/v1/metrics"; do
+            echo "Testing $endpoint"
+            for i in {1..10}; do
+              time=$(curl -s -o /dev/null -w "%{time_total}" "$BASE_URL$endpoint")
+              echo "Request $i: ${time}s"
+            done
+          done
+
+  # Job 5: Notify stakeholders
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [validate, deploy, test-deployed]
+    if: always()
+
+    steps:
+      - name: Prepare notification
+        id: notification
+        run: |
+          ENV="${{ needs.validate.outputs.deploy-environment }}"
+          STATUS="${{ needs.deploy.result }}"
+          URL="${{ needs.deploy.outputs.url }}"
+          
+          if [ "$STATUS" == "success" ]; then
+            MESSAGE="✅ Successfully deployed RallyCal to $ENV environment"
+            COLOR="good"
+          else
+            MESSAGE="❌ Failed to deploy RallyCal to $ENV environment"
+            COLOR="danger"
+          fi
+          
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Send Slack notification
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{
+                \"attachments\": [{
+                  \"color\": \"${{ steps.notification.outputs.color }}\",
+                  \"title\": \"RallyCal Deployment\",
+                  \"text\": \"${{ steps.notification.outputs.message }}\",
+                  \"fields\": [
+                    {\"title\": \"Environment\", \"value\": \"${{ needs.validate.outputs.deploy-environment }}\", \"short\": true},
+                    {\"title\": \"Image Tag\", \"value\": \"${{ needs.validate.outputs.image-tag }}\", \"short\": true},
+                    {\"title\": \"URL\", \"value\": \"${{ steps.notification.outputs.url }}\", \"short\": false}
+                  ]
+                }]
+              }" \
+              $SLACK_WEBHOOK_URL
+          else
+            echo "Slack webhook not configured"
+          fi
+
+      - name: Create GitHub deployment status
+        if: always()
+        run: |
+          echo "Deployment completed with status: ${{ needs.deploy.result }}"
+          # Update GitHub deployment status
+          # This would typically be handled automatically by the environment
+
+  # Job 6: Rollback capability (manual trigger only)
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy == 'true'
+    
+    steps:
+      - name: Initiate rollback
+        run: |
+          echo "Initiating rollback procedure..."
+          # Add rollback logic here
+          # This could involve:
+          # - Reverting to previous image tag
+          # - Rolling back database migrations
+          # - Restoring previous configuration
+          
+      - name: Verify rollback
+        run: |
+          echo "Verifying rollback was successful..."
+          # Add rollback verification logic

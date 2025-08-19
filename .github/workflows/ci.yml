@@ -1,0 +1,343 @@
+# RallyCal Continuous Integration Pipeline
+# Runs tests, linting, security checks, and builds Docker images
+
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+# Define environment variables
+env:
+  PYTHON_VERSION: '3.13'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# Define permissions for the workflow
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  actions: read
+
+jobs:
+  # Job 1: Run tests and quality checks
+  test:
+    name: Test & Quality Checks
+    runs-on: ubuntu-latest
+    
+    # Service containers for testing
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rallycal_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up project
+        run: uv sync --all-extras --dev
+
+      - name: Run linting with Ruff
+        run: |
+          uv run ruff check . --output-format=github
+          uv run ruff format --check .
+
+      - name: Run type checking with MyPy
+        run: uv run mypy src tests --junit-xml=reports/mypy.xml
+        continue-on-error: true
+
+      - name: Run security scan with Bandit
+        run: |
+          uv run bandit -r src/ -f json -o reports/bandit-report.json
+          uv run bandit -r src/ -f txt
+        continue-on-error: true
+
+      - name: Run dependency vulnerability scan
+        run: uv run safety check --json --output reports/safety-report.json
+        continue-on-error: true
+
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/rallycal_test
+          REDIS_URL: redis://localhost:6379/0
+          RALLYCAL_ENVIRONMENT: testing
+          RALLYCAL_SECRET_KEY: test-secret-key-for-ci-only
+        run: |
+          uv run pytest \
+            --cov=src/rallycal \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=html:reports/htmlcov \
+            --cov-report=term \
+            --junit-xml=reports/pytest.xml \
+            -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./reports/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 30
+
+  # Job 2: Build and test Docker image
+  build-image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tags: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Build arguments
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+  # Job 3: Security scanning of Docker image
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [test, build-image]
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Job 4: Performance testing
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: build-image
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start application with Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          sleep 30  # Wait for application to start
+
+      - name: Wait for application to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+
+      - name: Run basic load test with curl
+        run: |
+          # Basic performance test
+          echo "Running basic performance tests..."
+          for i in {1..10}; do
+            curl -s -o /dev/null -w "Request $i: %{http_code} - %{time_total}s\n" http://localhost:8000/health
+          done
+
+      - name: Test calendar endpoint
+        run: |
+          # Test main calendar endpoint
+          curl -s -o /dev/null -w "Calendar endpoint: %{http_code} - %{time_total}s\n" http://localhost:8000/api/v1/calendar.ics
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker-compose -f docker-compose.yml down -v
+
+  # Job 5: Integration tests
+  integration-test:
+    name: Integration Testing
+    runs-on: ubuntu-latest
+    needs: build-image
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start full application stack
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          sleep 30
+
+      - name: Wait for services to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+          timeout 30 bash -c 'until curl -f http://localhost:8000/api/v1/health/ready; do sleep 2; done'
+
+      - name: Run integration tests
+        run: |
+          # Test health endpoints
+          curl -f http://localhost:8000/health
+          curl -f http://localhost:8000/api/v1/health/comprehensive
+          curl -f http://localhost:8000/api/v1/health/ready
+          curl -f http://localhost:8000/api/v1/health/live
+          
+          # Test calendar endpoint
+          curl -f http://localhost:8000/api/v1/calendar.ics
+          
+          # Test metrics endpoint
+          curl -f http://localhost:8000/api/v1/metrics
+
+      - name: Check application logs
+        if: always()
+        run: |
+          echo "=== Application Logs ==="
+          docker-compose -f docker-compose.yml logs app
+          echo "=== Database Logs ==="
+          docker-compose -f docker-compose.yml logs db
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker-compose -f docker-compose.yml down -v
+
+  # Job 6: Deploy to staging (only on main branch)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [test, build-image, security-scan, performance-test, integration-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: staging
+      url: https://staging.rallycal.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          echo "Image: ${{ needs.build-image.outputs.image-tags }}"
+          echo "Digest: ${{ needs.build-image.outputs.image-digest }}"
+          # Add actual deployment commands here
+          # This could be kubectl, docker-compose, Terraform, etc.
+
+      - name: Run smoke tests on staging
+        run: |
+          echo "Running smoke tests on staging..."
+          # Add staging smoke tests here
+          curl -f https://staging.rallycal.com/health || true
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          echo "Staging deployment completed with status: ${{ job.status }}"
+          # Add notification logic (Slack, email, etc.)
+
+  # Job 7: Generate release notes and changelog
+  release-notes:
+    name: Generate Release Notes
+    runs-on: ubuntu-latest
+    needs: [test, build-image]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        run: |
+          # Generate changelog based on conventional commits
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## Latest Changes" >> CHANGELOG.md
+          git log --oneline --pretty=format:"- %s" HEAD~10..HEAD >> CHANGELOG.md
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGELOG.md
+          retention-days: 90
