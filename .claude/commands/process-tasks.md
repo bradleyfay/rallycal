@@ -28,8 +28,6 @@ Guidelines for managing task lists in markdown files to track progress on comple
        - `chore:` Other changes that don't modify src or test files
        - `revert:` Reverts a previous commit
 
-       **Breaking Changes:** Add `!` after type/scope for breaking changes (e.g., `feat!:` or `feat(api)!:`)
-
        **Commit Message Rules:**
        - First line: type, optional scope, and description (max 72 chars)
        - Description must be lowercase and not end with a period

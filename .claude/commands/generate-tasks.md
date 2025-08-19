@@ -1,8 +1,12 @@
 # Rule: Generating a Task List from a PRD
 
+## Role
+
+Senior Technical engineer with deep expertise in Python. You are familiar with the modern Python best-practices and packages and leverage some of the most popular cutting edge packages like FastAPI, Ruff, Pydantic, Hatch, uv, loguru, PyTest, and others for building industrial grade applications. 
+
 ## Goal
 
-To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format based on an existing Product Requirements Document (PRD). The task list should guide a developer through implementation.
+To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format based on an existing Product Requirements Document (PRD). The task list should guide a set of **junior** developers through implementation.
 
 ## Output
 
@@ -14,14 +18,16 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 
 1. **Receive PRD Reference:** The user points the AI to a specific PRD file
 2. **Analyze PRD:** The AI reads and analyzes the functional requirements, user stories, and other sections of the specified PRD.
-3. **Assess Current State:** Review the existing codebase to understand existing infrastructure, architectural patterns and conventions. Also, identify any existing modules or features that already exist and could be relevant to the PRD requirements. Then, identify existing related files, modules, and utilities that can be leveraged or need modification.
-4. **Phase 1: Generate Parent Tasks:** Based on the PRD analysis and current state assessment, create the file and generate the main, high-level tasks required to implement the feature. Use your judgement on how many high-level tasks to use. It's likely to be about
-5. **Inform the user:** Present these tasks to the user in the specified format (without sub-tasks yet) For example, say "I have generated the high-level tasks based on the PRD. Ready to generate the sub-tasks? Respond with 'Go' to proceed." .
-6. **Wait for Confirmation:** Pause and wait for the user to respond with "Go".
-7. **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task, cover the implementation details implied by the PRD, and consider existing codebase patterns where relevant without being constrained by them.
-8. **Identify Relevant Files:** Based on the tasks and PRD, identify potential files that will need to be created or modified. List these under the `Relevant Files` section, including corresponding test files if applicable.
-9. **Generate Final Output:** Combine the parent tasks, sub-tasks, relevant files, and notes into the final Markdown structure.
-10. **Save Task List:** Save the generated document in the `./product-specs/tasks/` directory with the filename `tasks-[prd-file-name].md`, where `[prd-file-name]` matches the base name of the input PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-prd-user-profile-editing.md`).
+3. **Ask Clarifying Questions:** If there are unclear or ambigious requirements to yourself, and you don't have a strong opinion, ask for clarity to amend the PRD with additional detail. If the PRD is clear, move on.
+4. **Assess Current State:** Review the existing codebase to understand existing infrastructure, architectural patterns and conventions. Also, identify any existing modules or features that already exist and could be relevant to the PRD requirements. Then, identify existing related files, modules, and utilities that can be leveraged or need modification.
+5. **Phase 1: Generate Parent Tasks:** Based on the PRD analysis and current state assessment, create the file and generate the main, high-level tasks required to implement the feature. Use your judgement on how many high-level tasks to use. It's likely to be about
+6. **Inform the user:** Present these tasks to the user in the specified format (without sub-tasks yet) For example, say "I have generated the high-level tasks based on the PRD. Ready to generate the sub-tasks? Respond with 'Go' to proceed." .
+7. **Wait for Confirmation:** Pause and wait for the user to respond with "Go".
+8. **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task, cover the implementation details implied by the PRD, and consider existing codebase patterns where relevant without being constrained by them.
+9. **Identify Relevant Files:** Based on the tasks and PRD, identify potential files that will need to be created or modified. List these under the `Relevant Files` section, including corresponding test files if applicable.
+10. **Generate Final Output:** Combine the parent tasks, sub-tasks, relevant files, and notes into the final Markdown structure.
+11. **Task Graph Dependcies:** Explicitly map out the dependencies between graphs identifying what can be done in parallel and what needs to be done in series to ensure quick progress without sacrificing quality.
+12. **Save Task List:** Save the generated document in the `./product-specs/tasks/` directory with the filename `tasks-[prd-file-name].md`, where `[prd-file-name]` matches the base name of the input PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-prd-user-profile-editing.md`).
 
 ## Output Format
 
