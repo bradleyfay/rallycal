@@ -1,7 +1,153 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "rallycal"
-version = "0.1.0"
-description = "Add your description here"
+dynamic = ["version"]
+description = "Family sports calendar aggregator that combines multiple iCal/ICS feeds into a single subscribable calendar feed"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.13"
-dependencies = []
+authors = [
+    { name = "RallyCal Team" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License", 
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "sqlalchemy[asyncio]>=2.0.23",
+    "httpx>=0.25.2",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "icalendar>=5.0.11",
+    "loguru>=0.7.2",
+    "aiosqlite>=0.19.0",
+    "alembic>=1.13.0",
+    "pyyaml>=6.0.1",
+    "tenacity>=8.2.3",
+    "python-multipart>=0.0.6",
+]
+
+[project.urls]
+Documentation = "https://github.com/unknown/rallycal#readme"
+Issues = "https://github.com/unknown/rallycal/issues"
+Source = "https://github.com/unknown/rallycal"
+
+[tool.hatch.version]
+path = "src/rallycal/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rallycal"]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.6",
+    "mypy>=1.7.1",
+    "respx>=0.20.2",
+    "faker>=20.1.0",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/rallycal {args:tests}"
+lint = "ruff check {args:.}"
+format = "ruff format {args:.}"
+typecheck = "mypy {args:src/rallycal tests}"
+all = ["lint", "typecheck", "test-cov"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "A",     # flake8-builtins
+    "ARG",   # flake8-unused-arguments  
+    "B",     # flake8-bugbear
+    "C",     # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "E",     # pycodestyle errors
+    "EM",    # flake8-errmsg
+    "F",     # pyflakes
+    "FBT",   # flake8-boolean-trap
+    "I",     # isort
+    "ICN",   # flake8-import-conventions
+    "N",     # pep8-naming
+    "PLC",   # pylint conventions
+    "PLE",   # pylint errors
+    "PLR",   # pylint refactor
+    "PLW",   # pylint warnings
+    "Q",     # flake8-quotes
+    "RUF",   # Ruff-specific rules
+    "S",     # flake8-bandit
+    "T",     # flake8-debugger
+    "TID",   # flake8-tidy-imports
+    "UP",    # pyupgrade
+    "W",     # pycodestyle warnings
+    "YTT",   # flake8-2020
+]
+ignore = [
+    "S101",   # Use of assert detected
+    "S311",   # Standard pseudo-random generators are not suitable for security/cryptographic purposes
+    "PLR0913", # Too many arguments in function definition
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["rallycal"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "icalendar.*",
+    "tenacity.*",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source_pkgs = ["rallycal", "tests"]
+branch = true
+parallel = true
+omit = [
+    "src/rallycal/__about__.py",
+]
+
+[tool.coverage.paths]
+rallycal = ["src/rallycal", "*/rallycal/src/rallycal"]
+tests = ["tests", "*/rallycal/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
