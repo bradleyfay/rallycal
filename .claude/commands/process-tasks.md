@@ -1,0 +1,84 @@
+# Task List Management
+
+Guidelines for managing task lists in markdown files to track progress on completing a PRD
+
+## Task Implementation
+
+- **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
+- **Completion protocol:**  
+  1. When you finish a **sub‑task**, immediately mark it as completed by changing `[ ]` to `[x]`.
+  2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
+     - **First**: Run the full test suite (`pytest`)
+     - **Only if all tests pass**: Stage changes (`git add .`)
+     - **Clean up**: Remove any temporary files and temporary code before committing
+     - **Commit**: Create a commit following the **Conventional Commits 1.0.0** standard precisely:
+
+       **Format:** `<type>[optional scope]: <description>`
+
+       **Types (use ONLY these):**
+       - `feat:` A new feature
+       - `fix:` A bug fix
+       - `docs:` Documentation only changes
+       - `style:` Changes that don't affect code meaning (white-space, formatting, missing semi-colons, etc)
+       - `refactor:` Code change that neither fixes a bug nor adds a feature
+       - `perf:` Code change that improves performance
+       - `test:` Adding missing tests or correcting existing tests
+       - `build:` Changes to build system or external dependencies
+       - `ci:` Changes to CI configuration files and scripts
+       - `chore:` Other changes that don't modify src or test files
+       - `revert:` Reverts a previous commit
+
+       **Breaking Changes:** Add `!` after type/scope for breaking changes (e.g., `feat!:` or `feat(api)!:`)
+
+       **Commit Message Rules:**
+       - First line: type, optional scope, and description (max 72 chars)
+       - Description must be lowercase and not end with a period
+       - Optional body: blank line, then more detailed explanation
+       - Optional footer: blank line, then `BREAKING CHANGE:` or issue references
+
+       **Example format:**
+
+       ```bash
+       git commit -m "feat(auth): add oauth2 integration for google login" \
+                  -m "" \
+                  -m "Implements OAuth2 flow with Google as identity provider." \
+                  -m "Includes token refresh mechanism and secure storage." \
+                  -m "" \
+                  -m "Closes #123"
+       ```
+
+       **Task-specific format:**
+
+       ```bash
+       git commit -m "<type>: <what was accomplished in parent task>" \
+                  -m "" \
+                  -m "<detailed description if needed>" \
+                  -m "" \
+                  -m "Task: <task number> from <PRD filename>"
+       ```
+
+  3. Once all the subtasks are marked completed and changes have been committed, mark the **parent task** as completed.
+  - Stop after each sub‑task and wait for the user's go‑ahead.
+
+## Task List Maintenance
+
+1. **Update the task list as you work:**
+   - Mark tasks and subtasks as completed (`[x]`) per the protocol above.
+   - Add new tasks as they emerge.
+
+2. **Maintain the "Relevant Files" section:**
+   - List every file created or modified.
+   - Give each file a one‑line description of its purpose.
+
+## AI Instructions
+
+When working with task lists, the AI must:
+
+1. Regularly update the task list file after finishing any significant work.
+2. Follow the completion protocol:
+   - Mark each finished **sub‑task** `[x]`.
+   - Mark the **parent task** `[x]` once **all** its subtasks are `[x]`.
+3. Add newly discovered tasks.
+4. Keep "Relevant Files" accurate and up to date.
+5. Before starting work, check which sub‑task is next.
+6. After implementing a sub‑task, update the file and then pause for user approval.

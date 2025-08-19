@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(git commit --no-verify)",
+      "Bash(git commit -n)",
+      "Write(**/.pre-commit-config.yaml)"
+    ]
+  },
+  "hooks": {
+    "after_edit": "echo '📋 Remember: Check changes against development standards in CLAUDE.md'",
+    "after_write": "echo '📚 Consider: Does this work warrant three-layer documentation?'",
+    "before_commit": "echo '✅ Verify: Conventional commits, pytest patterns, dependency justification'"
+  }
+}
