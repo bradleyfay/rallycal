@@ -49,13 +49,13 @@ Generated from: `product-specs/prd-rallycal.md`
 
 ## Tasks
 
-- [ ] 1.0 Modern Python Foundation & Project Infrastructure
-  - [ ] 1.1 Initialize hatch project structure with `hatch new --init` and create src/rallycal layout
-  - [ ] 1.2 Configure pyproject.toml with modern dependencies (FastAPI, SQLAlchemy[asyncio], httpx, pydantic, icalendar, uvicorn, loguru)
-  - [ ] 1.3 Add development dependencies (pytest, pytest-asyncio, pytest-cov, ruff, hatch) and configure tool sections
-  - [ ] 1.4 Set up Pydantic settings model in core/settings.py for environment variable validation
-  - [ ] 1.5 Configure structured logging with loguru in core/logging.py with proper levels and formatting
-  - [ ] 1.6 Configure ruff for linting, formatting, and import sorting with modern Python rules
+- [x] 1.0 Modern Python Foundation & Project Infrastructure
+  - [x] 1.1 Initialize hatch project structure with `hatch new --init` and create src/rallycal layout
+  - [x] 1.2 Configure pyproject.toml with modern dependencies (FastAPI, SQLAlchemy[asyncio], httpx, pydantic, icalendar, uvicorn, loguru)
+  - [x] 1.3 Add development dependencies (pytest, pytest-asyncio, pytest-cov, ruff, hatch) and configure tool sections
+  - [x] 1.4 Set up Pydantic settings model in core/settings.py for environment variable validation
+  - [x] 1.5 Configure structured logging with loguru in core/logging.py with proper levels and formatting
+  - [x] 1.6 Configure ruff for linting, formatting, and import sorting with modern Python rules
 
 - [ ] 2.0 Core Configuration Management System
   - [ ] 2.1 Design Pydantic models for calendar sources (name, url, color, enabled, auth) in config/models.py

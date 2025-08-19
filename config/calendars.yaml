@@ -1,0 +1,243 @@
+# RallyCal Configuration File
+# This file defines calendar sources and manual events for aggregation
+# Edit this file to add your sports calendars and team information
+
+# List of calendar sources to aggregate
+calendars:
+  # Example: TeamSnap calendar (popular youth sports platform)
+  - name: "Soccer Team - Wolves U12"
+    url: "webcal://go.teamsnap.com/team_calendars/1234567.ics"
+    color: "#FF0000"  # Red for soccer team
+    enabled: true
+    auth:
+      type: "none"  # TeamSnap public calendars don't require auth
+    refresh_interval: 3600  # 1 hour
+    timeout: 30
+    retry_attempts: 3
+    max_events: 500
+    filter_keywords: []  # Include all events
+    exclude_keywords: ["cancelled", "weather permitting"]
+
+  # Example: SportsEngine calendar (hockey, baseball, etc.)
+  - name: "Hockey Team - Lightning Bolts"
+    url: "https://www.sportsengine.com/calendar/export/1234567890.ics"
+    color: "#0066CC"  # Blue for hockey team
+    enabled: true
+    auth:
+      type: "none"
+    refresh_interval: 1800  # 30 minutes (more frequent for active season)
+    timeout: 30
+    retry_attempts: 3
+    max_events: 300
+    filter_keywords: ["practice", "game", "tournament"]
+    exclude_keywords: ["optional"]
+
+  # Example: LeagueLineup calendar
+  - name: "Baseball Team - Cardinals"
+    url: "https://www.leaguelineup.com/calendar_export.asp?url=cardinals&team=123"
+    color: "#CC0000"  # Dark red for baseball
+    enabled: true
+    auth:
+      type: "none"
+    refresh_interval: 7200  # 2 hours
+    timeout: 45  # Some platforms are slower
+    retry_attempts: 5
+    max_events: 200
+    filter_keywords: []
+    exclude_keywords: ["rainout", "tbd"]
+
+  # Example: Stack Sports (former Blue Sombrero)
+  - name: "Basketball Team - Eagles"
+    url: "https://stacksports.com/public/league_calendars/export/1234567.ics"
+    color: "#FF8800"  # Orange for basketball
+    enabled: true
+    auth:
+      type: "none"
+    refresh_interval: 3600
+    timeout: 30
+    retry_attempts: 3
+    max_events: 250
+    filter_keywords: ["game", "practice", "scrimmage"]
+    exclude_keywords: []
+
+  # Example: Private calendar with authentication
+  - name: "Swim Team - Dolphins"
+    url: "https://example-swim-club.com/private/team-calendar.ics"
+    color: "#00CCFF"  # Cyan for swim team
+    enabled: true
+    auth:
+      type: "basic"
+      username: "parent@example.com"
+      password: "your-password-here"  # Use environment variables in production
+    refresh_interval: 1800
+    timeout: 30
+    retry_attempts: 3
+    max_events: 400
+    filter_keywords: ["meet", "practice", "time trial"]
+    exclude_keywords: ["optional"]
+
+  # Example: Google Calendar (iCal export)
+  - name: "Track & Field - Cheetahs"
+    url: "https://calendar.google.com/calendar/ical/your-calendar-id%40group.calendar.google.com/public/basic.ics"
+    color: "#FFFF00"  # Yellow for track team
+    enabled: true
+    auth:
+      type: "none"
+    refresh_interval: 1800
+    timeout: 30
+    retry_attempts: 3
+    max_events: 300
+    filter_keywords: []
+    exclude_keywords: []
+
+  # Example: API-key authenticated calendar
+  - name: "Tennis Club - Aces"
+    url: "https://tennis-platform.com/api/calendar/export"
+    color: "#00FF00"  # Green for tennis
+    enabled: false  # Disabled until API key is configured
+    auth:
+      type: "api_key"
+      token: "your-api-key-here"
+      api_key_header: "X-API-Key"
+    refresh_interval: 3600
+    timeout: 30
+    retry_attempts: 3
+    max_events: 200
+    filter_keywords: ["match", "lesson", "tournament"]
+    exclude_keywords: ["cancelled"]
+
+# Manual events that don't come from external calendars
+manual_events:
+  # Example: One-time special event
+  - title: "Team Photo Day"
+    description: "Annual team photos for all families. Please arrive 15 minutes early."
+    start_date: "2024-03-15T10:00:00"
+    end_date: "2024-03-15T12:00:00"
+    location: "Community Center - Main Hall"
+    all_day: false
+    color: "#800080"  # Purple for special events
+    
+  # Example: Recurring fundraiser event
+  - title: "Weekly Car Wash Fundraiser"
+    description: "Help raise money for new equipment! All volunteers welcome."
+    start_date: "2024-03-01T09:00:00"
+    end_date: "2024-03-01T15:00:00"
+    location: "School Parking Lot"
+    all_day: false
+    color: "#FFA500"  # Orange for fundraisers
+    recurrence:
+      frequency: "weekly"
+      interval: 1
+      count: 12  # 12 weeks of car washes
+      by_weekday: [5]  # Saturday (0=Monday, 6=Sunday)
+
+  # Example: End of season party
+  - title: "Season End Celebration"
+    description: "Pizza party and awards ceremony for all teams"
+    start_date: "2024-05-20T17:00:00"
+    end_date: "2024-05-20T20:00:00"
+    location: "Pizza Palace - Party Room"
+    all_day: false
+    color: "#FF69B4"  # Pink for celebrations
+
+# Global settings for the entire calendar system
+global_settings:
+  # Default refresh interval for all calendars (can be overridden per calendar)
+  default_refresh_interval: 3600  # 1 hour
+  
+  # Default timezone for events without timezone information
+  default_timezone: "America/New_York"
+  
+  # Maximum number of events per calendar (memory management)
+  max_events_per_calendar: 1000
+  
+  # How long to keep events in the past (days)
+  retain_past_events_days: 30
+  
+  # Calendar metadata
+  calendar_name: "Family Sports Calendar"
+  calendar_description: "Aggregated calendar for all family sports activities"
+  
+  # Color theme preferences
+  color_theme:
+    primary: "#2E86AB"    # Primary blue
+    secondary: "#A23B72"  # Secondary purple
+    success: "#F18F01"    # Success orange
+    warning: "#C73E1D"    # Warning red
+  
+  # Notification settings (for future features)
+  notifications:
+    enabled: false
+    advance_notice_hours: [24, 2]  # Notify 24 hours and 2 hours before events
+    methods: ["email"]  # Future: ["email", "sms", "push"]
+  
+  # Export settings
+  export:
+    include_source_labels: true    # Add [Source Name] to event titles
+    include_descriptions: true     # Include event descriptions
+    include_locations: true        # Include event locations
+    max_title_length: 100         # Truncate long titles
+    
+  # Advanced features
+  advanced:
+    deduplication_enabled: true    # Remove duplicate events across sources
+    fuzzy_matching_threshold: 0.8  # How similar events need to be to deduplicate
+    auto_categorization: true      # Automatically categorize events by keywords
+    
+# Platform-specific configuration examples and documentation
+# 
+# Common Sports Platforms and their iCal URLs:
+#
+# TeamSnap:
+#   URL Format: webcal://go.teamsnap.com/team_calendars/{TEAM_ID}.ics
+#   Note: Replace {TEAM_ID} with your actual team ID from TeamSnap
+#   Authentication: Usually none for public team calendars
+#
+# SportsEngine:
+#   URL Format: https://www.sportsengine.com/calendar/export/{CALENDAR_ID}.ics
+#   Note: Find calendar ID in your SportsEngine dashboard
+#   Authentication: None for public calendars, may require login for private
+#
+# LeagueLineup:
+#   URL Format: https://www.leaguelineup.com/calendar_export.asp?url={LEAGUE}&team={TEAM_ID}
+#   Note: Replace {LEAGUE} and {TEAM_ID} with your league and team identifiers
+#   Authentication: Usually none
+#
+# Stack Sports (Blue Sombrero):
+#   URL Format: https://stacksports.com/public/league_calendars/export/{LEAGUE_ID}.ics
+#   Note: Check your league's calendar page for the exact export URL
+#   Authentication: None for public leagues
+#
+# Google Calendar:
+#   URL Format: https://calendar.google.com/calendar/ical/{CALENDAR_ID}/public/basic.ics
+#   Note: Calendar must be made public, get ID from calendar settings
+#   Authentication: None (for public calendars)
+#
+# Outlook/Office 365:
+#   URL Format: Available in calendar sharing settings
+#   Note: Calendar must be shared publicly or with specific people
+#   Authentication: May require OAuth2 for private calendars
+#
+# How to find your calendar's iCal URL:
+# 1. Log into your sports platform
+# 2. Navigate to your team's calendar
+# 3. Look for "Export", "Subscribe", or "iCal" options
+# 4. Copy the provided URL (usually starts with webcal:// or https://)
+# 5. Test the URL in a browser - it should download an .ics file
+#
+# Color Guide:
+# Use hex colors (#RRGGBB) to distinguish different teams/sports:
+# - Soccer: #00AA00 (green), #FF0000 (red), #0066CC (blue)
+# - Basketball: #FF8800 (orange), #800080 (purple)
+# - Baseball: #CC0000 (red), #000080 (navy), #228B22 (forest green)
+# - Hockey: #0066CC (blue), #FFD700 (gold), #800000 (maroon)
+# - Swimming: #00CCFF (cyan), #0066FF (blue)
+# - Track: #FFFF00 (yellow), #FF6600 (orange)
+# - Tennis: #00FF00 (green), #FFFFFF (white)
+#
+# Troubleshooting:
+# - If events don't appear, check that the URL is accessible in a browser
+# - Verify the calendar is public or authentication is correctly configured
+# - Some platforms require specific user agents or headers
+# - Check the logs for detailed error messages
+# - Test with a simple calendar first before adding multiple sources
