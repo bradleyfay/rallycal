@@ -57,13 +57,13 @@ Generated from: `product-specs/prd-rallycal.md`
   - [x] 1.5 Configure structured logging with loguru in core/logging.py with proper levels and formatting
   - [x] 1.6 Configure ruff for linting, formatting, and import sorting with modern Python rules
 
-- [ ] 2.0 Core Configuration Management System
-  - [ ] 2.1 Design Pydantic models for calendar sources (name, url, color, enabled, auth) in config/models.py
-  - [ ] 2.2 Implement ConfigManager class with YAML parsing and validation in config/manager.py
-  - [ ] 2.3 Add comprehensive Pydantic validators for URL validation and color format checking
-  - [ ] 2.4 Create sample calendars.yaml with realistic sports platform examples and documentation
-  - [ ] 2.5 Implement file-based configuration change detection with proper event handling
-  - [ ] 2.6 Add support for manual events configuration with datetime and recurrence validation
+- [x] 2.0 Core Configuration Management System
+  - [x] 2.1 Design Pydantic models for calendar sources (name, url, color, enabled, auth) in config/models.py
+  - [x] 2.2 Implement ConfigManager class with YAML parsing and validation in config/manager.py
+  - [x] 2.3 Add comprehensive Pydantic validators for URL validation and color format checking
+  - [x] 2.4 Create sample calendars.yaml with realistic sports platform examples and documentation
+  - [x] 2.5 Implement file-based configuration change detection with proper event handling
+  - [x] 2.6 Add support for manual events configuration with datetime and recurrence validation
 
 - [ ] 3.0 Calendar Data Fetching & Processing Engine
   - [ ] 3.1 Implement async CalendarFetcher using httpx.AsyncClient with connection pooling
@@ -89,13 +89,13 @@ Generated from: `product-specs/prd-rallycal.md`
   - [ ] 5.5 Implement cascade deletion and cleanup procedures for removed calendar sources
   - [ ] 5.6 Add database indexing strategy for performance optimization
 
-- [ ] 6.0 iCal Feed Generation & Standards Compliance
-  - [ ] 6.1 Implement ICalGenerator using icalendar library with RFC 5545 compliance
-  - [ ] 6.2 Add comprehensive timezone handling and VTIMEZONE generation
-  - [ ] 6.3 Implement color coding via CATEGORIES and X-CUSTOM properties
-  - [ ] 6.4 Add event categorization, source labeling, and metadata preservation
-  - [ ] 6.5 Ensure full RFC 5545 compliance with validation and error reporting
-  - [ ] 6.6 Implement intelligent caching with conditional generation and ETags
+- [x] 6.0 iCal Feed Generation & Standards Compliance
+  - [x] 6.1 Implement ICalGenerator using icalendar library with RFC 5545 compliance
+  - [x] 6.2 Add comprehensive timezone handling and VTIMEZONE generation
+  - [x] 6.3 Implement color coding via CATEGORIES and X-CUSTOM properties
+  - [x] 6.4 Add event categorization, source labeling, and metadata preservation
+  - [x] 6.5 Ensure full RFC 5545 compliance with validation and error reporting
+  - [x] 6.6 Implement intelligent caching with conditional generation and ETags
 
 - [ ] 7.0 FastAPI Web Server & API Endpoints
   - [ ] 7.1 Set up FastAPI application with async middleware, CORS, and security headers
