@@ -1,0 +1,112 @@
+# Render Infrastructure as Code Configuration
+# See: https://render.com/docs/infrastructure-as-code
+
+services:
+  # Web Service - RallyCal API
+  - type: web
+    name: rallycal-web
+    runtime: docker
+    plan: starter # Can upgrade to standard/pro as needed
+    region: oregon # Choose closest to your users
+    buildCommand: ""
+    startCommand: "/app/start.sh"
+    healthCheckPath: "/health"
+    
+    # Auto-deploy settings
+    autoDeploy: true
+    branch: main
+    
+    # Container configuration
+    dockerfilePath: "./Dockerfile"
+    dockerContext: "."
+    
+    # Environment variables
+    envVars:
+      # Application settings
+      - key: APP_NAME
+        value: RallyCal
+      - key: ENVIRONMENT  
+        value: production
+      - key: DEBUG
+        value: "false"
+        
+      # Server configuration
+      - key: SERVER_HOST
+        value: "0.0.0.0"
+      - key: SERVER_PORT
+        value: "8000" 
+      - key: SERVER_WORKERS
+        value: "2"
+      - key: SERVER_LOG_LEVEL
+        value: info
+        
+      # Database - will be set by database service below
+      - key: DB_URL
+        fromDatabase:
+          name: rallycal-postgres
+          property: connectionString
+          
+      # Security (set these as secret env vars in Render dashboard)
+      - key: SECURITY_SECRET_KEY
+        generateValue: true # Render will auto-generate secure value
+      - key: SECURITY_CORS_ORIGINS
+        value: "https://rallycal.onrender.com,https://yourdomain.com"
+        
+      # Calendar processing settings  
+      - key: CALENDAR_CONFIG_FILE
+        value: config/calendars.yaml
+      - key: CALENDAR_FETCH_TIMEOUT
+        value: "30"
+      - key: CALENDAR_RETRY_ATTEMPTS
+        value: "3" 
+      - key: CALENDAR_CACHE_TTL
+        value: "3600"
+      - key: CALENDAR_MAX_EVENTS_PER_CALENDAR
+        value: "1000"
+        
+      # Rate limiting
+      - key: SECURITY_RATE_LIMIT_REQUESTS
+        value: "1000"
+
+  # Background worker (optional - for scheduled tasks)
+  - type: worker
+    name: rallycal-worker
+    runtime: docker
+    plan: starter
+    region: oregon
+    buildCommand: ""
+    startCommand: "python -m src.rallycal.services.scheduler"
+    dockerfilePath: "./Dockerfile"
+    dockerContext: "."
+    
+    # Shared environment variables with web service
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DB_URL
+        fromDatabase:
+          name: rallycal-postgres
+          property: connectionString
+      - key: SECURITY_SECRET_KEY
+        sync: false # Will be synced from web service
+        
+# Database service
+databases:
+  - name: rallycal-postgres
+    databaseName: rallycal
+    user: rallycal
+    plan: starter # $7/month - can upgrade to standard/pro
+    region: oregon
+    
+    # Backup configuration
+    ipAllowList: []  # Empty = allow all IPs (default)
+    
+# Static site (optional - for documentation/landing page)    
+# - type: static
+#   name: rallycal-docs
+#   buildCommand: "npm run build"
+#   staticPublishPath: "./docs/build"
+#   pullRequestPreviewsEnabled: true
+#   envVars:
+#     - key: NODE_ENV
+#       value: production

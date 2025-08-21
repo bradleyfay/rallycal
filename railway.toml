@@ -1,0 +1,51 @@
+[build]
+builder = "dockerfile"
+dockerfile = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Environment-specific settings
+[environments.production]
+variables = { ENVIRONMENT = "production" }
+
+[environments.staging]
+variables = { ENVIRONMENT = "staging" }
+
+# Service configuration
+[[services]]
+name = "rallycal-web"
+source = "."
+
+[services.variables]
+# Application settings
+APP_NAME = "RallyCal"
+ENVIRONMENT = "production"
+DEBUG = "false"
+
+# Server settings
+SERVER_HOST = "0.0.0.0"
+SERVER_PORT = "8000"
+SERVER_WORKERS = "2"
+SERVER_LOG_LEVEL = "info"
+
+# Database (Railway will inject DATABASE_URL automatically for PostgreSQL)
+# DB_URL will be set by Railway's PostgreSQL addon
+
+# Security
+# Set in Railway dashboard for security
+# SECURITY_SECRET_KEY = "set-in-railway-dashboard"
+
+# Calendar settings
+CALENDAR_CONFIG_FILE = "config/calendars.yaml"
+CALENDAR_FETCH_TIMEOUT = "30"
+CALENDAR_RETRY_ATTEMPTS = "3"
+CALENDAR_CACHE_TTL = "3600"
+CALENDAR_MAX_EVENTS_PER_CALENDAR = "1000"
+
+# Rate limiting
+SECURITY_RATE_LIMIT_REQUESTS = "1000"
+SECURITY_CORS_ORIGINS = "https://*.railway.app,https://yourdomain.com"
