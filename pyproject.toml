@@ -24,9 +24,8 @@ classifiers = [
 dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    "sqlalchemy[asyncio]>=2.0.23",
+    "sqlmodel>=0.0.14",
     "httpx>=0.25.2",
-    "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
     "icalendar>=5.0.11",
     "loguru>=0.7.2",
@@ -36,6 +35,7 @@ dependencies = [
     "tenacity>=8.2.3",
     "python-multipart>=0.0.6",
     "watchdog>=3.0.0",
+    "apscheduler>=3.10.4",
 ]
 
 [project.urls]
@@ -58,6 +58,7 @@ dependencies = [
     "mypy>=1.7.1",
     "respx>=0.20.2",
     "faker>=20.1.0",
+    "pre-commit>=3.5.0",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -75,19 +76,24 @@ format = "ruff format {args:.}"
 format-check = "ruff format --check {args:.}"
 
 # Combined ruff operations
-ruff = ["format", "lint-fix"]
-ruff-check = ["format-check", "lint"]
+ruff-all = ["ruff format {args:.}", "ruff check --fix {args:.}"]
+ruff-check = ["ruff format --check {args:.}", "ruff check {args:.}"]
 
 # Type checking
 typecheck = "mypy {args:src/rallycal tests}"
 
 # Run all checks (CI/CD)
 all = ["ruff-check", "typecheck", "test-cov"]
-all-fix = ["ruff", "typecheck", "test-cov"]
+all-fix = ["ruff-all", "typecheck", "test-cov"]
 
 # Development helpers
 clean = "rm -rf .ruff_cache .mypy_cache .pytest_cache htmlcov .coverage"
 check = ["ruff-check", "typecheck"]
+
+# Pre-commit hooks
+pre-commit-install = "pre-commit install"
+pre-commit-run = "pre-commit run --all-files"
+pre-commit-update = "pre-commit autoupdate"
 
 [tool.ruff]
 # Python version target
@@ -381,6 +387,15 @@ filterwarnings = [
     "ignore::UserWarning",
     "ignore::DeprecationWarning:pkg_resources.*",
     "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+
+[tool.bandit]
+# Bandit security linter configuration
+exclude_dirs = ["tests", "alembic/versions"]
+skips = [
+    "B101",  # assert_used - allow asserts in tests and development
+    "B601",  # paramiko_calls - we don't use paramiko
+    "B603",  # subprocess_without_shell_equals_true - handled by pre-commit
 ]
 
 [tool.alembic]
