@@ -30,15 +30,17 @@ RallyCal is a family sports calendar aggregator that combines multiple iCal/ICS 
 
 - **Python**: 3.13+ (use async/await patterns throughout)
 - **Web Framework**: FastAPI (not Flask, Django, etc.)
-- **ORM**: SQLAlchemy with async sessions (use SQLAlchemy 2.0+ patterns)
+- **ORM**: SQLModel
 - **HTTP Client**: httpx AsyncClient (not requests, urllib, aiohttp)
 - **Validation**: Pydantic v2 for all data boundaries
 - **Package Manager**: uv (not pip, poetry, pipenv, conda)
 - **Build System**: hatch (not setuptools directly)
 - **Calendar Library**: icalendar for parsing/generation
-- **Logging**: loguru (not standard logging)
+- **Logging**: loguru (not standard logging) and Rich
 - **Testing**: pytest with pytest-asyncio (never unittest)
 - **Linting/Formatting**: ruff (not black, flake8, pylint, isort separately)
+- **Environment Management**: python-dotenv for .env files  
+- **Date/Time**: pendulum or arrow (more robust than datetime)
 
 ### Architectural Patterns
 
@@ -52,7 +54,7 @@ RallyCal is a family sports calendar aggregator that combines multiple iCal/ICS 
 
 ### File Structure Conventions
 
-```
+```txt
 src/rallycal/
 ├── api/            # FastAPI routes and middleware
 ├── config/         # Configuration and settings

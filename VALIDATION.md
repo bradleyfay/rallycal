@@ -324,6 +324,7 @@ uv run pytest -m "not slow"
 Use this checklist to verify all components:
 
 ### ✅ Basic Functionality
+
 - [ ] Docker Compose starts all services
 - [ ] Application responds to health checks
 - [ ] Database connectivity works
@@ -331,12 +332,14 @@ Use this checklist to verify all components:
 - [ ] API endpoints return expected responses
 
 ### ✅ Configuration Management
+
 - [ ] Calendar configuration loads properly
 - [ ] Webhook triggers configuration reload
 - [ ] Manual events appear in calendar output
 - [ ] External calendar feeds are processed
 
 ### ✅ Code Quality
+
 - [ ] All tests pass
 - [ ] Linting checks pass
 - [ ] Type checking passes
@@ -344,12 +347,14 @@ Use this checklist to verify all components:
 - [ ] Code coverage meets requirements
 
 ### ✅ Performance
+
 - [ ] Health checks respond under 100ms
 - [ ] Calendar generation completes under 2s
 - [ ] Application handles 100+ concurrent requests
 - [ ] Memory usage remains stable over time
 
 ### ✅ Production Readiness
+
 - [ ] Docker image builds successfully
 - [ ] Container runs in production mode
 - [ ] Logs are structured and informative
@@ -357,12 +362,14 @@ Use this checklist to verify all components:
 - [ ] Security headers are present
 
 ### ✅ CI/CD Pipeline
+
 - [ ] GitHub Actions workflow passes
 - [ ] Docker image builds and pushes
 - [ ] Security scanning completes
 - [ ] Deployment process works
 
 ### ✅ Infrastructure (If Deployed)
+
 - [ ] Terraform configuration validates
 - [ ] AWS resources provision correctly
 - [ ] Load balancer routes traffic properly

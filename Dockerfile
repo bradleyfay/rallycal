@@ -147,10 +147,14 @@ asyncio.run(migrate())
 
 # Start the application
 echo "Starting RallyCal application..."
+PORT=${PORT:-${RALLYCAL_PORT:-8000}}
+HOST=${RALLYCAL_HOST:-0.0.0.0}
+WORKERS=${SERVER_WORKERS:-1}
+
 exec uvicorn src.rallycal.api.main:app \
-    --host "$RALLYCAL_HOST" \
-    --port "$RALLYCAL_PORT" \
-    --workers 1 \
+    --host "$HOST" \
+    --port "$PORT" \
+    --workers "$WORKERS" \
     --log-level info \
     --access-log \
     --loop uvloop \
@@ -164,6 +168,7 @@ RUN cat > /app/healthcheck.py << 'EOF'
 #!/usr/bin/env python3
 """Health check script for Docker container."""
 import asyncio
+import os
 import sys
 from urllib.parse import urljoin
 
@@ -172,7 +177,8 @@ import httpx
 
 async def health_check():
     """Perform health check against the application."""
-    base_url = f"http://localhost:{os.environ.get('RALLYCAL_PORT', 8000)}"
+    port = os.environ.get('PORT', os.environ.get('RALLYCAL_PORT', '8000'))
+    base_url = f"http://localhost:{port}"
     health_url = urljoin(base_url, "/health")
     
     try:
@@ -190,7 +196,6 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    import os
     sys.exit(asyncio.run(health_check()))
 EOF
 
